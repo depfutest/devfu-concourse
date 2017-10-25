@@ -1,9 +1,21 @@
+resource_types:
+- name: github-pull-request
+  type: docker-image
+  source:
+    repository: jtarchie/pr
+
 resources:
 - name: devfu-concourse
   type: git
   source:
     uri: https://github.com/depfutest/devfu-concourse
     branch: master
+- name: prs
+  type: github-pull-request
+  source:
+    repo: depfutest/devfu-concourse
+    access_token: dfedfe1808ee32646e6d83deda5178fda01ab6b2
+    every: true
 
 jobs:
 - name: test-app
@@ -12,3 +24,20 @@ jobs:
     trigger: true
   - task: tests
     file: devfu-concourse/build.yml
+
+- name: test-app-prs
+  plan:
+  - get: prs
+    trigger: true
+    version: every
+  - put: prs
+    params: {path: prs, status: pending}
+  - task: tests
+    file: prs/build.yml
+    input_mapping: {devfu-concourse: prs}
+    on_failure:
+      put: prs
+      params: {path: prs, status: failure}
+    on_success:
+      put: prs
+      params: {path: prs, status: success}
