@@ -1,0 +1,14 @@
+resources:
+- name: devfu-concourse
+  type: git
+  source:
+    uri: https://github.com/depfutest/devfu-concourse
+    branch: master
+
+jobs:
+- name: test-app
+  plan:
+  - get: devfu-concourse
+    trigger: true
+  - task: tests
+    file: devfu-concourse/build.yml
